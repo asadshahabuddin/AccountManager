@@ -1,10 +1,9 @@
-package org.as.am.mongodb;
+package org.as.am.dao;
 
 import org.bson.Document;
 import org.as.am.encrypt.AES;
 import com.mongodb.MongoClient;
 import org.as.am.model.Account;
-import org.as.am.dao.AccountDAO;
 import com.mongodb.BasicDBObject;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

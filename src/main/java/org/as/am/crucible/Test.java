@@ -1,7 +1,7 @@
 package org.as.am.crucible;
 
 import org.json.simple.JSONObject;
-import org.as.am.mongodb.MongoDBAccountDAO;
+import org.as.am.dao.MongoDBAccountDAO;
 
 public class Test {
     /**
