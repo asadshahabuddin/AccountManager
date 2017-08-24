@@ -12,6 +12,35 @@ public class Account {
     private List<QuestionAnswer> qAList;
 
     /**
+     * Constructor
+     * @param name
+     *     Account name
+     * @param email
+     *     Email address
+     * @param username
+     *     Username
+     * @param password
+     *     Password
+     * @param pin
+     *     PIN
+     * @param qAList
+     *     List of secret questions and answers
+     */
+    public Account(String name,
+                   String email,
+                   String username,
+                   String password,
+                   String pin,
+                   List<QuestionAnswer> qAList) {
+        this.name     = name;
+        this.email    = email;
+        this.username = username;
+        this.password = password;
+        this.pin      = pin;
+        this.qAList   = qAList;
+    }
+
+    /**
      * Set account name
      * @param name
      *     Account name

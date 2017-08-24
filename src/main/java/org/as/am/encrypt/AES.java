@@ -26,6 +26,10 @@ public class AES {
      *     The equivalent cipher text
      */
     public static String encrypt(String plainText) {
+        if(plainText == null) {
+            return "";
+        }
+
         byte[] encrypted = null;
         try {
             Key key = generateKey();
@@ -35,7 +39,7 @@ public class AES {
         } catch(Exception e) {
             e.printStackTrace();
         }
-        return new BASE64Encoder().encode(encrypted);
+        return encrypted == null ? "" : new BASE64Encoder().encode(encrypted);
     }
 
     /**
@@ -46,6 +50,10 @@ public class AES {
      *     The equivalent plain text
      */
     public static String decrypt(String cipherText) {
+        if(cipherText == null) {
+            return "";
+        }
+
         byte[] decrypted = null;
         try {
             Key key = generateKey();
@@ -56,6 +64,6 @@ public class AES {
         } catch(Exception e) {
             e.printStackTrace();
         }
-        return new String(decrypted);
+        return decrypted == null ? "" : new String(decrypted);
     }
 }

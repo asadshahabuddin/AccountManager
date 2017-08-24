@@ -1,6 +1,6 @@
 package org.as.am.crucible;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
 import org.as.am.dao.MongoDBAccountDAO;
 
 public class Test {
@@ -11,7 +11,7 @@ public class Test {
      */
     public static void main(String[] args) {
         MongoDBAccountDAO dao = new MongoDBAccountDAO();
-        JSONObject account = dao.findAccount("test", null);
-        System.out.println("\n" + account);
+        JSONArray accounts = dao.findAccounts("test", null);
+        System.out.println("\n" + accounts.toJSONString());
     }
 }
