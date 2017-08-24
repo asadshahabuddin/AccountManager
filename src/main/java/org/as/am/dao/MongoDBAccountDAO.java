@@ -16,19 +16,6 @@ import static org.as.am.properties.MongoDBProperties.*;
 
 public class MongoDBAccountDAO
     implements AccountDAO {
-    private final MongoClient client;
-    private final MongoDatabase database;
-    private final MongoCollection collection;
-
-    /**
-     * Constructor
-     */
-    public MongoDBAccountDAO() {
-        client     = new MongoClient(HOSTNAME, PORT);
-        database   = client.getDatabase(DATABASE);
-        collection = database.getCollection(COLLECTION_ACCOUNT);
-    }
-
     /**
      * Check if the account is valid
      * @param account
@@ -89,13 +76,29 @@ public class MongoDBAccountDAO
     }
 
     public boolean insertAccount(Account account) {
+        MongoClient client = new MongoClient(HOSTNAME, PORT);
+        MongoCollection collection = null;
         boolean inserted = false;
-        if(collection != null &&
-           isValidAccount(account) &&
-           isUniqueAccount(account)) {
-            collection.insertOne(createDocument(account));
-            inserted = true;
+
+        try {
+            if(client != null) {
+                MongoDatabase database = client.getDatabase(DATABASE);
+                if(database != null) {
+                    collection = database.getCollection(COLLECTION_ACCOUNT);
+                }
+            }
+            if(collection != null &&
+               isValidAccount(account) &&
+               isUniqueAccount(account)) {
+                collection.insertOne(createDocument(account));
+                inserted = true;
+            }
+        } finally {
+            if(client != null) {
+                client.close();
+            }
         }
+
         return inserted;
     }
 
@@ -105,49 +108,77 @@ public class MongoDBAccountDAO
     }
 
     public boolean deleteAccounts(Account account) {
+        MongoClient client = new MongoClient(HOSTNAME, PORT);
+        MongoCollection collection = null;
         boolean deleted = false;
-        if(collection != null &&
-           account.getName() != null &&
-           account.getName().length() > 0) {
-            BasicDBObject filter = new BasicDBObject(NAME, account.getName());
-            if(account.getEmail() != null &&
-               account.getEmail().length() > 0) {
-                filter.append(EMAIL, AES.encrypt(account.getEmail()));
+
+        try {
+            if(client != null) {
+                MongoDatabase database = client.getDatabase(DATABASE);
+                if(database != null) {
+                    collection = database.getCollection(COLLECTION_ACCOUNT);
+                }
             }
-            deleted = collection.deleteMany(filter).getDeletedCount() > 0;
+            if(collection != null &&
+               account.getName() != null &&
+               account.getName().length() > 0) {
+                BasicDBObject filter = new BasicDBObject(NAME, account.getName());
+                if(account.getEmail() != null &&
+                   account.getEmail().length() > 0) {
+                    filter.append(EMAIL, AES.encrypt(account.getEmail()));
+                }
+                deleted = collection.deleteMany(filter).getDeletedCount() > 0;
+            }
+        } finally {
+            if(client != null) {
+                client.close();
+            }
         }
+
         return deleted;
     }
 
     public JSONArray findAccounts(String accountName, String email) {
+        MongoClient client = new MongoClient(HOSTNAME, PORT);
+        MongoCollection collection = null;
         JSONArray accounts = new JSONArray();
-        if(collection != null &&
-           accountName != null &&
-           accountName.length() > 0) {
-            BasicDBObject filter = new BasicDBObject(NAME, accountName);
-            if(email != null &&
-               email.length() > 0) {
-                filter.append(EMAIL, AES.encrypt(email));
-            }
-            FindIterable<Document> documents = collection.find(filter);
 
-            if(documents != null) {
-                for(Document document : documents) {
-                    JSONObject account = new JSONObject();
-                    account.put(NAME    , document.getString(NAME));
-                    account.put(EMAIL   , document.get(EMAIL) != null ?
-                            AES.decrypt(document.getString(EMAIL)) : "");
-                    account.put(USERNAME, document.get(USERNAME) != null ?
-                            AES.decrypt(document.getString(USERNAME)) : "");
-                    account.put(PASSWORD, AES.decrypt(document.getString(PASSWORD)));
-                    account.put(PIN     , document.get(PIN) != null ?
-                            AES.decrypt(document.getString(PIN)) : "");
-                    account.put(QA      , document.get(QA) != null ?
-                            AES.decrypt(document.getString(QA)) : new JSONArray());
-                    accounts.add(account);
+        try {
+            if(client != null) {
+                MongoDatabase database = client.getDatabase(DATABASE);
+                if(database != null) {
+                    collection = database.getCollection(COLLECTION_ACCOUNT);
                 }
             }
+            if(collection != null &&
+               accountName != null &&
+               accountName.length() > 0) {
+                BasicDBObject filter = new BasicDBObject(NAME, accountName);
+                if(email != null &&
+                   email.length() > 0) {
+                    filter.append(EMAIL, AES.encrypt(email));
+                }
+                FindIterable<Document> documents = collection.find(filter);
+
+                if(documents != null) {
+                    for(Document document : documents) {
+                        JSONObject account = new JSONObject();
+                        account.put(NAME    , document.getString(NAME));
+                        account.put(EMAIL   , AES.decrypt(document.getString(EMAIL)));
+                        account.put(USERNAME, AES.decrypt(document.getString(USERNAME)));
+                        account.put(PASSWORD, AES.decrypt(document.getString(PASSWORD)));
+                        account.put(PIN     , AES.decrypt(document.getString(PIN)));
+                        account.put(QA      , AES.decrypt(document.getString(QA)));
+                        accounts.add(account);
+                    }
+                }
+            }
+        } finally {
+            if(client != null) {
+                client.close();
+            }
         }
+
         return accounts;
     }
 }
