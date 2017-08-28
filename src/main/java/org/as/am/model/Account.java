@@ -14,6 +14,13 @@ public class Account {
 
     /**
      * Constructor
+     */
+    public Account() {
+        // NO-OP
+    }
+
+    /**
+     * Constructor
      * @param name
      *     Account name
      * @param email

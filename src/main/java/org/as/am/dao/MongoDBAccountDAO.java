@@ -5,7 +5,6 @@ import org.as.am.encrypt.AES;
 import com.mongodb.MongoClient;
 import org.as.am.model.Account;
 import org.bson.types.ObjectId;
-import com.mongodb.BasicDBObject;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.as.am.model.QuestionAnswer;
@@ -42,7 +41,7 @@ public class MongoDBAccountDAO
     private boolean isUniqueAccount(Account account) {
         return !(account.getEmail() != null &&
                  account.getEmail().length() > 0 &&
-                 findAccounts(account.getName(), account.getEmail()).size() > 0);
+                 findAccountDetails(account.getName(), account.getEmail()).size() > 0);
     }
 
     /**
@@ -52,9 +51,9 @@ public class MongoDBAccountDAO
      * @return
      *     The equivalent document
      */
-    private BasicDBObject createDocument(Account account) {
-        BasicDBObject document = new BasicDBObject();
-        JSONArray qaJsonArr    = new JSONArray();
+    private Document createDocument(Account account) {
+        Document document   = new Document();
+        JSONArray qaJsonArr = new JSONArray();
 
         // Create a JSON array of secret questions and answers
         if(account.getQAList() != null) {
@@ -123,9 +122,9 @@ public class MongoDBAccountDAO
                 }
             }
             if(collection != null) {
-                BasicDBObject filter      = new BasicDBObject(ID, new ObjectId(accountId)),
-                              document    = createDocument(account),
-                              newDocument = new BasicDBObject("$set", document);
+                Document filter      = new Document(ID, new ObjectId(accountId)),
+                         document    = createDocument(account),
+                         newDocument = new Document("$set", document);
                 updated = collection.updateOne(filter, newDocument).getModifiedCount() > 0;
             }
         } finally {
@@ -136,7 +135,7 @@ public class MongoDBAccountDAO
         return updated;
     }
 
-    public boolean deleteAccounts(String accountId) {
+    public boolean deleteAccount(String accountId) {
         boolean deleted = false;
         if(accountId == null ||
            accountId.length() == 0) {
@@ -153,7 +152,7 @@ public class MongoDBAccountDAO
                 }
             }
             if(collection != null) {
-                BasicDBObject filter = new BasicDBObject(ID, new ObjectId(accountId));
+                Document filter = new Document(ID, new ObjectId(accountId));
                 deleted = collection.deleteOne(filter).getDeletedCount() > 0;
             }
         } finally {
@@ -164,11 +163,43 @@ public class MongoDBAccountDAO
         return deleted;
     }
 
-    public JSONArray findAccounts(String accountName, String email) {
-        JSONArray accounts = new JSONArray();
+    public JSONArray findAccounts() {
+        MongoClient client         = new MongoClient(HOSTNAME, PORT);
+        MongoCollection collection = null;
+        JSONArray accounts         = new JSONArray();
+
+        try {
+            if(client != null) {
+                MongoDatabase database = client.getDatabase(DATABASE);
+                if(database != null) {
+                    collection = database.getCollection(COLLECTION_ACCOUNT);
+                }
+            }
+            if(collection != null) {
+                FindIterable<Document> documents = collection.find();
+                if(documents != null) {
+                    for(Document document : documents) {
+                        JSONObject account = new JSONObject();
+                        account.put(ID  , document.get(ID).toString());
+                        account.put(NAME, document.getString(NAME));
+                        accounts.add(account);
+                    }
+                }
+            }
+        } finally {
+            if(client != null) {
+                client.close();
+            }
+        }
+
+        return accounts;
+    }
+
+    public JSONArray findAccountDetails(String accountName, String email) {
+        JSONArray accountDetails = new JSONArray();
         if(accountName == null ||
            accountName.length() == 0) {
-            return accounts;
+            return accountDetails;
         }
 
         MongoClient client = new MongoClient(HOSTNAME, PORT);
@@ -181,7 +212,7 @@ public class MongoDBAccountDAO
                 }
             }
             if(collection != null) {
-                BasicDBObject filter = new BasicDBObject(NAME, accountName);
+                Document filter = new Document(NAME, accountName);
                 if(email != null &&
                    email.length() > 0) {
                     filter.append(EMAIL, AES.encrypt(email));
@@ -191,13 +222,14 @@ public class MongoDBAccountDAO
                 if(documents != null) {
                     for(Document document : documents) {
                         JSONObject account = new JSONObject();
+                        account.put(ID      , document.get(ID).toString());
                         account.put(NAME    , document.getString(NAME));
                         account.put(EMAIL   , AES.decrypt(document.getString(EMAIL)));
                         account.put(USERNAME, AES.decrypt(document.getString(USERNAME)));
                         account.put(PASSWORD, AES.decrypt(document.getString(PASSWORD)));
                         account.put(PIN     , AES.decrypt(document.getString(PIN)));
                         account.put(QA      , AES.decrypt(document.getString(QA)));
-                        accounts.add(account);
+                        accountDetails.add(account);
                     }
                 }
             }
@@ -206,6 +238,6 @@ public class MongoDBAccountDAO
                 client.close();
             }
         }
-        return accounts;
+        return accountDetails;
     }
 }

@@ -28,22 +28,30 @@ public interface AccountDAO {
     boolean updateAccount(String accountId, Account account);
 
     /**
-     * Delete accounts by account name and email address (if provided)
+     * Delete an account
      * @param accountId
      *     Account ID, which in turn is a MongoDB document identifier.
      * @return
-     *     true iff any account is deleted
+     *     true iff the account is deleted
      */
-    boolean deleteAccounts(String accountId);
+    boolean deleteAccount(String accountId);
+
 
     /**
-     * Find all accounts by account name and email address (if provided)
+     * Find account names
+     * @return
+     *     A list of all account names
+     */
+    JSONArray findAccounts();
+
+    /**
+     * Find account details by account name and email address (if provided)
      * @param accountName
      *     Account name
      * @param email
      *     Email address
      * @return
-     *     Accounts, if any are found.
+     *     Account details
      */
-    JSONArray findAccounts(String accountName, String email);
+    JSONArray findAccountDetails(String accountName, String email);
 }
