@@ -4,6 +4,7 @@ import org.bson.Document;
 import org.as.am.encrypt.AES;
 import com.mongodb.MongoClient;
 import org.as.am.model.Account;
+import org.bson.types.ObjectId;
 import com.mongodb.BasicDBObject;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -24,7 +25,8 @@ public class MongoDBAccountDAO
      *     true iff the account is valid
      */
     private boolean isValidAccount(Account account) {
-        return !((account.getName() == null || account.getName().length() == 0) ||
+        return !(account == null ||
+                 (account.getName() == null || account.getName().length() == 0) ||
                  ((account.getEmail() == null || account.getEmail().length() == 0) &&
                   (account.getUsername() == null || account.getUsername().length() == 0)) ||
                  (account.getPassword() == null || account.getPassword().length() == 0));
@@ -76,10 +78,13 @@ public class MongoDBAccountDAO
     }
 
     public boolean insertAccount(Account account) {
+        boolean inserted = false;
+        if(!isValidAccount(account)) {
+            return inserted;
+        }
+
         MongoClient client = new MongoClient(HOSTNAME, PORT);
         MongoCollection collection = null;
-        boolean inserted = false;
-
         try {
             if(client != null) {
                 MongoDatabase database = client.getDatabase(DATABASE);
@@ -88,7 +93,6 @@ public class MongoDBAccountDAO
                 }
             }
             if(collection != null &&
-               isValidAccount(account) &&
                isUniqueAccount(account)) {
                 collection.insertOne(createDocument(account));
                 inserted = true;
@@ -98,20 +102,19 @@ public class MongoDBAccountDAO
                 client.close();
             }
         }
-
         return inserted;
     }
 
     // Coming this Fall
-    public boolean updateAccount(Account account) {
-        return false;
-    }
+    public boolean updateAccount(String accountId, Account account) {
+        boolean updated = false;
+        if(accountId == null ||
+           !isValidAccount(account)) {
+            return updated;
+        }
 
-    public boolean deleteAccounts(Account account) {
         MongoClient client = new MongoClient(HOSTNAME, PORT);
         MongoCollection collection = null;
-        boolean deleted = false;
-
         try {
             if(client != null) {
                 MongoDatabase database = client.getDatabase(DATABASE);
@@ -119,30 +122,29 @@ public class MongoDBAccountDAO
                     collection = database.getCollection(COLLECTION_ACCOUNT);
                 }
             }
-            if(collection != null &&
-               account.getName() != null &&
-               account.getName().length() > 0) {
-                BasicDBObject filter = new BasicDBObject(NAME, account.getName());
-                if(account.getEmail() != null &&
-                   account.getEmail().length() > 0) {
-                    filter.append(EMAIL, AES.encrypt(account.getEmail()));
-                }
-                deleted = collection.deleteMany(filter).getDeletedCount() > 0;
+            if(collection != null) {
+                BasicDBObject filter      = new BasicDBObject(ID, new ObjectId(accountId)),
+                              document    = createDocument(account),
+                              newDocument = new BasicDBObject("$set", document);
+                updated = collection.updateOne(filter, newDocument).getModifiedCount() > 0;
             }
         } finally {
             if(client != null) {
                 client.close();
             }
         }
-
-        return deleted;
+        return updated;
     }
 
-    public JSONArray findAccounts(String accountName, String email) {
+    public boolean deleteAccounts(String accountId) {
+        boolean deleted = false;
+        if(accountId == null ||
+           accountId.length() == 0) {
+            return deleted;
+        }
+
         MongoClient client = new MongoClient(HOSTNAME, PORT);
         MongoCollection collection = null;
-        JSONArray accounts = new JSONArray();
-
         try {
             if(client != null) {
                 MongoDatabase database = client.getDatabase(DATABASE);
@@ -150,9 +152,35 @@ public class MongoDBAccountDAO
                     collection = database.getCollection(COLLECTION_ACCOUNT);
                 }
             }
-            if(collection != null &&
-               accountName != null &&
-               accountName.length() > 0) {
+            if(collection != null) {
+                BasicDBObject filter = new BasicDBObject(ID, new ObjectId(accountId));
+                deleted = collection.deleteOne(filter).getDeletedCount() > 0;
+            }
+        } finally {
+            if(client != null) {
+                client.close();
+            }
+        }
+        return deleted;
+    }
+
+    public JSONArray findAccounts(String accountName, String email) {
+        JSONArray accounts = new JSONArray();
+        if(accountName == null ||
+           accountName.length() == 0) {
+            return accounts;
+        }
+
+        MongoClient client = new MongoClient(HOSTNAME, PORT);
+        MongoCollection collection = null;
+        try {
+            if(client != null) {
+                MongoDatabase database = client.getDatabase(DATABASE);
+                if(database != null) {
+                    collection = database.getCollection(COLLECTION_ACCOUNT);
+                }
+            }
+            if(collection != null) {
                 BasicDBObject filter = new BasicDBObject(NAME, accountName);
                 if(email != null &&
                    email.length() > 0) {
@@ -178,7 +206,6 @@ public class MongoDBAccountDAO
                 client.close();
             }
         }
-
         return accounts;
     }
 }

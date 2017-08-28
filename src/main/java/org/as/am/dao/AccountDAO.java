@@ -18,21 +18,23 @@ public interface AccountDAO {
 
     /**
      * Update an account
+     * @param accountId
+     *     Account ID, which in turn is a MongoDB document identifier.
      * @param account
      *     Account
      * @return
      *     true iff the account is updated
      */
-    boolean updateAccount(Account account);
+    boolean updateAccount(String accountId, Account account);
 
     /**
      * Delete accounts by account name and email address (if provided)
-     * @param account
-     *     Account
+     * @param accountId
+     *     Account ID, which in turn is a MongoDB document identifier.
      * @return
      *     true iff any account is deleted
      */
-    boolean deleteAccounts(Account account);
+    boolean deleteAccounts(String accountId);
 
     /**
      * Find all accounts by account name and email address (if provided)

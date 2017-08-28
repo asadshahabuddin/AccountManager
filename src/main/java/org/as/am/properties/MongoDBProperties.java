@@ -7,6 +7,7 @@ public class MongoDBProperties {
     public static final String DATABASE           = "ACCOUNT_MANAGER";
     public static final String COLLECTION_ACCOUNT = "account";
 
+    public static final String ID       = "_id";
     public static final String NAME     = "name";
     public static final String EMAIL    = "email";
     public static final String USERNAME = "username";

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Account {
+    private String id;
     private String name;
     private String email;
     private String username;
@@ -26,18 +27,38 @@ public class Account {
      * @param qAList
      *     List of secret questions and answers
      */
-    public Account(String name,
+    public Account(String id,
+                   String name,
                    String email,
                    String username,
                    String password,
                    String pin,
                    List<QuestionAnswer> qAList) {
+        this.id       = id;
         this.name     = name;
         this.email    = email;
         this.username = username;
         this.password = password;
         this.pin      = pin;
         this.qAList   = qAList;
+    }
+
+    /**
+     * Set document identifier
+     * @param id
+     *     Document identifier
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * Get document identifier
+     * @return
+     *     Document identifier
+     */
+    public String getId() {
+        return id;
     }
 
     /**
